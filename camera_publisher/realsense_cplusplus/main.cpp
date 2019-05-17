@@ -1,6 +1,7 @@
 #include <librealsense2/rs.hpp> // Include RealSense Cross Platform API
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
+#include <stdio.h>
 
 using namespace std;
 using namespace rs2;
@@ -36,6 +37,10 @@ bool profile_changed(const std::vector<rs2::stream_profile>& current, const std:
 // capture depth and color video streams and render them to the screens
 int main(int argc, char * argv[]) try
 {
+	// Removing old sockets
+	remove("/tmp/camera_image");
+	remove("/tmp/camera_depth");
+	remove("/tmp/camera_1m");
 
 	auto out_image 		= cv::VideoWriter(gst_str_image, 0, FRAMERATE, cv::Size(COLOR_INPUT_WIDTH, COLOR_INPUT_HEIGHT), true);
 	auto out_image_1m 	= cv::VideoWriter(gst_str_image_1m, 0, FRAMERATE, cv::Size(COLOR_INPUT_WIDTH, COLOR_INPUT_HEIGHT), true);
@@ -173,7 +178,7 @@ int main(int argc, char * argv[]) try
 		rgb_back_image.download(rgb_back_image_out);
 
 
-		imshow( WINDOW_RGB, rgb_image_out );
+		// imshow( WINDOW_RGB, rgb_image_out );
 		//imshow( WINDOW_DEPTH, depth_image_out );
 		//imshow( WINDOW_FILTERED_DEPTH, filterd_depth_image_out );
 		//imshow( WINDOW_BACK_RGB, rgb_back_image_out );
@@ -185,7 +190,7 @@ int main(int argc, char * argv[]) try
 		// out_image.write(rgb_image.getMat(cv::ACCESS_READ));
 		// out_image_1m.write(rgb_back_image.getMat(cv::ACCESS_READ));
 
-		cvWaitKey( 1 );
+		//cvWaitKey( 1 );
 	}
 
     return EXIT_SUCCESS;
