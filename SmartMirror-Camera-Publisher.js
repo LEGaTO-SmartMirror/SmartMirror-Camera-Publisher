@@ -8,7 +8,7 @@
  */
 
 
-Module.register('smartmirror-camera-publisher',{
+Module.register('SmartMirror-Camera-Publisher',{
 
 	defaults: {
 		//Module set used for strangers and if no user is detected
