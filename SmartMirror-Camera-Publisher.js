@@ -22,6 +22,10 @@ Module.register('SmartMirror-Camera-Publisher',{
 	start: function() {
 		this.sendSocketNotification('CONFIG', this.config);
 		Log.info('Starting module: ' + this.name);
-	}
+	},
+
+	notificationReceived: function(notification, payload) {
+       	
+    },
 
 });

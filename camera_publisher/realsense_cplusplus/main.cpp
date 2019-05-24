@@ -15,7 +15,7 @@ int const DEPTH_INPUT_WIDTH      = 1280;
 int const DEPTH_INPUT_HEIGHT     = 720;
 int const FRAMERATE       	 = 30;
 
-int const DISTANS_TO_CROP = 55000;
+int const DISTANS_TO_CROP = 65000;
 
 // Named windows
 char* const WINDOW_DEPTH = "Depth Image";
