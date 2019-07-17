@@ -1,0 +1,6 @@
+#ignore pyc...
+*.pyc
+
+camera_publisher/realsense_cplusplus/build/*
+*.bak
+camera_publisher/imgui.ini
