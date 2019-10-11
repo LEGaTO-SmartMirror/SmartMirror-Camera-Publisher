@@ -8,14 +8,15 @@ module.exports = NodeHelper.create({
 
  	python_start: function () {
 		const self = this;
-//    		const pyshell = new PythonShell('modules/' + this.name + '/camera_publisher/image_webcam_broadcaster.py', { mode: 'json', args: [JSON.stringify(this.config)]});
-    		self.pyshell = new PythonShell('modules/' + this.name + '/camera_publisher/image_realsense_broadcaster_cplusplus.py', {pythonPath: 'python', mode: 'json', args: [JSON.stringify(this.config)]});
+    		self.pyshell = new PythonShell('modules/' + this.name + '/camera_publisher/image_webcam_broadcaster.py', {pythonPath: 'python3', args: [JSON.stringify(this.config)]});
+    		//self.pyshell = new PythonShell('modules/' + this.name + '/camera_publisher/image_realsense_broadcaster_cplusplus.py', {pythonPath: 'python', mode: 'json', args: [JSON.stringify(this.config)]});
 
     		self.pyshell.on('message', function (message) {
 			try {
+				var parsed_message = JSON.parse(message)
 				//console.log("[MSG " + self.name + "] " + message);
-      				if (message.hasOwnProperty('status')){
-      					console.log("[" + self.name + "] " + message.status);
+      				if (parsed_message.hasOwnProperty('status')){
+      					console.log("[" + self.name + "] " + parsed_message.status);
       				}
 			}
 			catch(err) {
