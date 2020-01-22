@@ -9,12 +9,12 @@ import signal
 BASE_DIR = os.path.dirname(__file__) + '/'
 os.chdir(BASE_DIR)
 
-if os.path.exists("/tmp/camera_image") is True:
-	os.remove("/tmp/camera_image")
-if os.path.exists("/tmp/camera_1m") is True:
-	os.remove("/tmp/camera_1m")
-if os.path.exists("/tmp/camera_depth") is True:
-	os.remove("/tmp/camera_depth")
+if os.path.exists("/dev/shm/camera_image") is True:
+	os.remove("/dev/shm/camera_image")
+if os.path.exists("/dev/shm/camera_1m") is True:
+	os.remove("/dev/shm/camera_1m")
+if os.path.exists("/dev/shm/camera_depth") is True:
+	os.remove("/dev/shm/camera_depth")
 
 def to_node(type, message):
 	# convert to json and print (node helper will read from stdout)
@@ -35,12 +35,12 @@ def shutdown(self, signum):
 	to_node("status", 'Shutdown: Cleaning up camera...')
 	kill(p.pid)
 	#p.stop()
-	if os.path.exists("/tmp/camera_image") is True:
-		os.remove("/tmp/camera_image")
-	if os.path.exists("/tmp/camera_1m") is True:
-		os.remove("/tmp/camera_1m")
-	if os.path.exists("/tmp/camera_depth") is True:
-		os.remove("/tmp/camera_depth")
+	if os.path.exists("/dev/shm/camera_image") is True:
+		os.remove("/dev/shm/camera_image")
+	if os.path.exists("/dev/shm/camera_1m") is True:
+		os.remove("/dev/shm/camera_1m")
+	if os.path.exists("/dev/shm/camera_depth") is True:
+		os.remove("/dev/shm/camera_depth")
 	to_node("status", 'Shutdown: Done.')
 	exit()
 

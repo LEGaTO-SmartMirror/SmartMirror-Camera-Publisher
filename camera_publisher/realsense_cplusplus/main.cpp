@@ -15,7 +15,7 @@ int const DEPTH_INPUT_WIDTH      = 1280;
 int const DEPTH_INPUT_HEIGHT     = 720;
 int const FRAMERATE       	 = 30;
 
-int const DISTANS_TO_CROP = 65000;
+int const DISTANS_TO_CROP = 43000;
 
 // Named windows
 char* const WINDOW_DEPTH = "Depth Image";
@@ -24,9 +24,9 @@ char* const WINDOW_RGB     = "RGB Image";
 char* const WINDOW_BACK_RGB     = "Background RGB Image";
 
 //Define the gstreamer sink
-char* const gst_str_image = "appsrc ! shmsink socket-path=/tmp/camera_image sync=false wait-for-connection=false shm-size=200000000";
-char* const gst_str_depth = "appsrc ! shmsink socket-path=/tmp/camera_depth sync=true wait-for-connection=false shm-size=200000000";
-char* const gst_str_image_1m = "appsrc ! shmsink socket-path=/tmp/camera_1m sync=false wait-for-connection=false shm-size=200000000";
+char* const gst_str_image = "appsrc ! shmsink socket-path=/dev/shm/camera_image sync=false wait-for-connection=false shm-size=100000000";
+char* const gst_str_depth = "appsrc ! shmsink socket-path=/dev/shm/camera_depth sync=true wait-for-connection=false shm-size=100000000";
+char* const gst_str_image_1m = "appsrc ! shmsink socket-path=/dev/shm/camera_1m sync=false wait-for-connection=false shm-size=100000000";
 
 //void render_slider(rect location, float& clipping_dist);
 float get_depth_scale(rs2::device dev);
@@ -38,13 +38,13 @@ bool profile_changed(const std::vector<rs2::stream_profile>& current, const std:
 int main(int argc, char * argv[]) try
 {
 	// Removing old sockets
-	remove("/tmp/camera_image");
-	remove("/tmp/camera_depth");
-	remove("/tmp/camera_1m");
+	remove("/dev/shm/camera_image");
+	remove("/dev/shm/camera_depth");
+	remove("/dev/shm/camera_1m");
 
-	auto out_image 		= cv::VideoWriter(gst_str_image, 0, FRAMERATE, cv::Size(COLOR_INPUT_WIDTH, COLOR_INPUT_HEIGHT), true);
-	auto out_image_1m 	= cv::VideoWriter(gst_str_image_1m, 0, FRAMERATE, cv::Size(COLOR_INPUT_WIDTH, COLOR_INPUT_HEIGHT), true);
-	auto out_depth_image 	= cv::VideoWriter(gst_str_depth, 0, FRAMERATE, cv::Size(COLOR_INPUT_WIDTH, COLOR_INPUT_HEIGHT), false);
+	auto out_image 		= cv::VideoWriter(gst_str_image,0 , FRAMERATE, cv::Size(COLOR_INPUT_WIDTH, COLOR_INPUT_HEIGHT), true);
+	auto out_image_1m 	= cv::VideoWriter(gst_str_image_1m,0 , FRAMERATE, cv::Size(COLOR_INPUT_WIDTH, COLOR_INPUT_HEIGHT), true);
+	auto out_depth_image 	= cv::VideoWriter(gst_str_depth,0 , FRAMERATE, cv::Size(COLOR_INPUT_WIDTH, COLOR_INPUT_HEIGHT), false);
 
 	//std::cout << "main started .. " << std::endl;
 	// Create a pipeline to easily configure and start the camera
@@ -70,7 +70,7 @@ int main(int argc, char * argv[]) try
 	//rs2::device & dev = *ctx.get_device("843112072189");
 
 	//cfg.enable_device("843112073861"); //left	
-	cfg.enable_device("843112072189"); //right
+	//cfg.enable_device("843112072189"); //right
 	
 
 	//std::cout << "config created .. " << std::endl;
@@ -178,9 +178,9 @@ int main(int argc, char * argv[]) try
 		rgb_back_image.download(rgb_back_image_out);
 
 
-		// imshow( WINDOW_RGB, rgb_image_out );
+		//imshow( WINDOW_RGB, rgb_image_out );
 		//imshow( WINDOW_DEPTH, depth_image_out );
-		//imshow( WINDOW_FILTERED_DEPTH, filterd_depth_image_out );
+		////imshow( WINDOW_FILTERED_DEPTH, filterd_depth_image_out );
 		//imshow( WINDOW_BACK_RGB, rgb_back_image_out );
 
 		out_image.write(rgb_image_out);

@@ -8,7 +8,7 @@ ADD_DEFINITIONS(
 
 project(camera_publisher)
 
-find_package(OpenCV 3.1 REQUIRED)
+find_package(OpenCV 4.1 REQUIRED)
 
 find_package(PkgConfig)
 pkg_check_modules(RS realsense2)
