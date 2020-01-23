@@ -14,6 +14,8 @@ int const COLOR_INPUT_HEIGHT     = 1080;
 int const DEPTH_INPUT_WIDTH      = 1280;
 int const DEPTH_INPUT_HEIGHT     = 720;
 int const FRAMERATE       	 = 30;
+int const COLOR_SMALL_WIDTH      = 512;
+int const COLOR_SMALL_HEIGHT     = 512;
 
 int const DISTANS_TO_CROP = 43000;
 
@@ -27,6 +29,7 @@ char* const WINDOW_BACK_RGB     = "Background RGB Image";
 char* const gst_str_image = "appsrc ! shmsink socket-path=/dev/shm/camera_image sync=false wait-for-connection=false shm-size=100000000";
 char* const gst_str_depth = "appsrc ! shmsink socket-path=/dev/shm/camera_depth sync=true wait-for-connection=false shm-size=100000000";
 char* const gst_str_image_1m = "appsrc ! shmsink socket-path=/dev/shm/camera_1m sync=false wait-for-connection=false shm-size=100000000";
+char* const gst_str_image_small = "appsrc ! shmsink socket-path=/dev/shm/camera_small sync=false wait-for-connection=false shm-size=100000000";
 
 //void render_slider(rect location, float& clipping_dist);
 float get_depth_scale(rs2::device dev);
@@ -45,6 +48,7 @@ int main(int argc, char * argv[]) try
 	auto out_image 		= cv::VideoWriter(gst_str_image,0 , FRAMERATE, cv::Size(COLOR_INPUT_WIDTH, COLOR_INPUT_HEIGHT), true);
 	auto out_image_1m 	= cv::VideoWriter(gst_str_image_1m,0 , FRAMERATE, cv::Size(COLOR_INPUT_WIDTH, COLOR_INPUT_HEIGHT), true);
 	auto out_depth_image 	= cv::VideoWriter(gst_str_depth,0 , FRAMERATE, cv::Size(COLOR_INPUT_WIDTH, COLOR_INPUT_HEIGHT), false);
+	auto out_image_small 	= cv::VideoWriter(gst_str_image_small,0 , FRAMERATE, cv::Size(COLOR_SMALL_WIDTH, COLOR_SMALL_HEIGHT), true);
 
 	//std::cout << "main started .. " << std::endl;
 	// Create a pipeline to easily configure and start the camera
@@ -111,7 +115,7 @@ int main(int argc, char * argv[]) try
 
 
 	cv::cuda::GpuMat depth_image, depth_image_fliped, depth_image_rotated;
-	cv::cuda::GpuMat rgb_image,rgb_image_fliped,rgb_image_rotated;	
+	cv::cuda::GpuMat rgb_image,rgb_image_fliped,rgb_image_rotated,rgb_scaled;	
 	cv::Mat depth8u;	
 
 	
@@ -120,6 +124,7 @@ int main(int argc, char * argv[]) try
 	Mat rgb_image_out;
 	Mat depth_image_out;
 	Mat rgb_back_image_out;
+	Mat small_rgb_image_out;
 
 	Ptr<cuda::Filter> median = cuda::createMedianFilter(depth8u_medianBlur.type(), 7);
 	Ptr<cuda::Filter> gaussian = cuda::createGaussianFilter(depth8u_medianBlur.type(),depth8u_gausBlur.type(), Size(31,31),0);
@@ -153,6 +158,8 @@ int main(int argc, char * argv[]) try
 		cuda::rotate(rgb_image_fliped, rgb_image_rotated,Size(1080,1920),90.0,0,1920);
 		cuda::rotate(depth_image_fliped, depth_image_rotated,Size(1080,1920),90.0,0,1920);
 
+		cuda::resize(rgb_image_rotated, rgb_scaled, Size(512, 512),0,0, INTER_AREA);
+
 		
 
 		cuda::threshold(depth_image_rotated,depth_thresh,double(DISTANS_TO_CROP * depth_scale),255,THRESH_TOZERO_INV);
@@ -176,6 +183,7 @@ int main(int argc, char * argv[]) try
 		//depth8u_gausBlur_Thresh.download(filterd_depth_image_out);
 
 		rgb_back_image.download(rgb_back_image_out);
+		rgb_scaled.download(small_rgb_image_out);
 
 
 		//imshow( WINDOW_RGB, rgb_image_out );
@@ -186,6 +194,7 @@ int main(int argc, char * argv[]) try
 		out_image.write(rgb_image_out);
 		out_image_1m.write(rgb_back_image_out);
 		out_depth_image.write(depth_image_out);
+		out_image_small.write(small_rgb_image_out);
 
 		// out_image.write(rgb_image.getMat(cv::ACCESS_READ));
 		// out_image_1m.write(rgb_back_image.getMat(cv::ACCESS_READ));
