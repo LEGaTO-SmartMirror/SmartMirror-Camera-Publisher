@@ -15,6 +15,8 @@ if os.path.exists("/dev/shm/camera_1m") is True:
 	os.remove("/dev/shm/camera_1m")
 if os.path.exists("/dev/shm/camera_depth") is True:
 	os.remove("/dev/shm/camera_depth")
+if os.path.exists("/dev/shm/camera_small") is True:
+	os.remove("/dev/shm/camera_small")
 
 def to_node(type, message):
 	# convert to json and print (node helper will read from stdout)
@@ -41,6 +43,8 @@ def shutdown(self, signum):
 		os.remove("/dev/shm/camera_1m")
 	if os.path.exists("/dev/shm/camera_depth") is True:
 		os.remove("/dev/shm/camera_depth")
+	if os.path.exists("/dev/shm/camera_small") is True:
+		os.remove("/dev/shm/camera_small")
 	to_node("status", 'Shutdown: Done.')
 	exit()
 

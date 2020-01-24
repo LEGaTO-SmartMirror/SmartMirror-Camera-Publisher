@@ -14,8 +14,8 @@ int const COLOR_INPUT_HEIGHT     = 1080;
 int const DEPTH_INPUT_WIDTH      = 1280;
 int const DEPTH_INPUT_HEIGHT     = 720;
 int const FRAMERATE       	 = 30;
-int const COLOR_SMALL_WIDTH      = 512;
-int const COLOR_SMALL_HEIGHT     = 512;
+int const COLOR_SMALL_WIDTH      = 416;
+int const COLOR_SMALL_HEIGHT     = 416;
 
 int const DISTANS_TO_CROP = 43000;
 
@@ -44,6 +44,7 @@ int main(int argc, char * argv[]) try
 	remove("/dev/shm/camera_image");
 	remove("/dev/shm/camera_depth");
 	remove("/dev/shm/camera_1m");
+	remove("/dev/shm/camera_small");
 
 	auto out_image 		= cv::VideoWriter(gst_str_image,0 , FRAMERATE, cv::Size(COLOR_INPUT_WIDTH, COLOR_INPUT_HEIGHT), true);
 	auto out_image_1m 	= cv::VideoWriter(gst_str_image_1m,0 , FRAMERATE, cv::Size(COLOR_INPUT_WIDTH, COLOR_INPUT_HEIGHT), true);
@@ -158,7 +159,7 @@ int main(int argc, char * argv[]) try
 		cuda::rotate(rgb_image_fliped, rgb_image_rotated,Size(1080,1920),90.0,0,1920);
 		cuda::rotate(depth_image_fliped, depth_image_rotated,Size(1080,1920),90.0,0,1920);
 
-		cuda::resize(rgb_image_rotated, rgb_scaled, Size(512, 512),0,0, INTER_AREA);
+		cuda::resize(rgb_image_rotated, rgb_scaled, Size(COLOR_SMALL_WIDTH, COLOR_SMALL_HEIGHT),0,0, INTER_AREA);
 
 		
 
@@ -190,6 +191,7 @@ int main(int argc, char * argv[]) try
 		//imshow( WINDOW_DEPTH, depth_image_out );
 		////imshow( WINDOW_FILTERED_DEPTH, filterd_depth_image_out );
 		//imshow( WINDOW_BACK_RGB, rgb_back_image_out );
+		//imshow(WINDOW_RGB,small_rgb_image_out);
 
 		out_image.write(rgb_image_out);
 		out_image_1m.write(rgb_back_image_out);
@@ -199,7 +201,7 @@ int main(int argc, char * argv[]) try
 		// out_image.write(rgb_image.getMat(cv::ACCESS_READ));
 		// out_image_1m.write(rgb_back_image.getMat(cv::ACCESS_READ));
 
-		//cvWaitKey( 1 );
+		//cv::waitKey( 1 );
 	}
 
     return EXIT_SUCCESS;
