@@ -28,4 +28,10 @@ Module.register('SmartMirror-Camera-Publisher',{
        	
     },
 
+	socketNotificationReceived: function(notification, payload) {
+		if (notification === 'CAMERA_FPS') {
+			this.sendNotification('CAMERA_FPS', payload);
+		};
+	}
+
 });

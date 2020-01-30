@@ -2,6 +2,7 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/highgui.hpp>
 #include <stdio.h>
+#include <chrono>
 
 using namespace std;
 using namespace rs2;
@@ -16,6 +17,9 @@ int const DEPTH_INPUT_HEIGHT     = 720;
 int const FRAMERATE       	 = 30;
 int const COLOR_SMALL_WIDTH      = 416;
 int const COLOR_SMALL_HEIGHT     = 416;
+
+double framecounteracc =0.0;
+int framecounter = 0;
 
 int const DISTANS_TO_CROP = 43000;
 
@@ -130,6 +134,10 @@ int main(int argc, char * argv[]) try
 	Ptr<cuda::Filter> median = cuda::createMedianFilter(depth8u_medianBlur.type(), 7);
 	Ptr<cuda::Filter> gaussian = cuda::createGaussianFilter(depth8u_medianBlur.type(),depth8u_gausBlur.type(), Size(31,31),0);
 
+	
+	unsigned long long now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+	auto before = now;
+    
 	while (true){
 		// Using the align object, we block the application until a frameset is available
 		rs2::frameset frameset = pipe.wait_for_frames();
@@ -202,6 +210,23 @@ int main(int argc, char * argv[]) try
 		// out_image_1m.write(rgb_back_image.getMat(cv::ACCESS_READ));
 
 		//cv::waitKey( 1 );
+
+		unsigned long long now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+    	auto after = now;
+
+
+		double curr = 1000. / (after - before);
+		framecounteracc += curr;
+		before = after;
+		framecounter += 1;
+
+		if (framecounter > 30){
+
+			std::cout << "{\"CAMERA_FPS\": "<< (framecounteracc/framecounter) <<"}" << std::endl;
+			framecounteracc = 0;
+			framecounter = 0;
+		}
+	
 	}
 
     return EXIT_SUCCESS;
