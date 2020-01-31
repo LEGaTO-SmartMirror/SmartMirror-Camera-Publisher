@@ -17,6 +17,10 @@ Module.register('SmartMirror-Camera-Publisher',{
 		everyoneClass: "everyone",
 		//Set of modules which should be shown for every user
 		forAllClass: "forall",
+		rotation: 90.0,
+		image_width: 1920, 
+		image_height: 1080
+
 	},
 
 	start: function() {

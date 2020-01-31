@@ -1,6 +1,6 @@
 'use strict';
 const NodeHelper = require('node_helper');
-const { spawn } = require('child_process');
+const { spawn, exec } = require('child_process');
 
 const {PythonShell} = require('python-shell');
 var pythonStarted = false
@@ -10,14 +10,13 @@ module.exports = NodeHelper.create({
  	python_start: function () {
 		const self = this;
 
-			self.objectDet = spawn('modules/' + this.name + '/camera_publisher/realsense_cplusplus/build/camera_publisher',[self.config.image_width, self.config.image_height]);
+			self.camerPub = spawn('modules/' + this.name + '/camera_publisher/realsense_cplusplus/build/camera_publisher',[self.config.image_width, self.config.image_height, self.config.rotation]);
 
-			self.objectDet.stdout.on('data', (data) => {
+			self.camerPub.stdout.on('data', (data) => {
 				try{
 					var parsed_message = JSON.parse(`${data}`)
 	
 					if (parsed_message.hasOwnProperty('CAMERA_FPS')){
-						//console.log("[" + self.name + "] object detection fps: " + JSON.stringify(parsed_message));
 						self.sendSocketNotification('CAMERA_FPS', parsed_message.CAMERA_FPS);
 					}else if (parsed_message.hasOwnProperty('STATUS')){
 						console.log("[" + self.name + "] status received: " + JSON.stringify(parsed_message));
@@ -28,6 +27,15 @@ module.exports = NodeHelper.create({
 				}
   				//console.log(`stdout: ${data}`);
 			});	
+
+			/*exec(`renice -n 20 -p ${self.camerPub.pid}`,(error,stdout,stderr) => {
+				if (error) {
+					console.error(`exec error: ${error}`);
+  				}
+  				console.log(`stdout: ${stdout}`);
+  				console.error(`stderr: ${stderr}`);
+			});*/
+
 		
     		/*self.pyshell = new PythonShell('modules/' + this.name + '/camera_publisher/image_realsense_broadcaster_cplusplus.py', {pythonPath: 'python3', args: [JSON.stringify(this.config)]});
     		//self.pyshell = new PythonShell('modules/' + this.name + '/camera_publisher/image_realsense_broadcaster_cplusplus.py', {pythonPath: 'python', mode: 'json', args: [JSON.stringify(this.config)]});

@@ -3,6 +3,7 @@
 #include <opencv2/highgui.hpp>
 #include <stdio.h>
 #include <chrono>
+#include <thread>
 
 using namespace std;
 using namespace rs2;
@@ -14,20 +15,25 @@ int const COLOR_INPUT_WIDTH      = 1920;
 int const COLOR_INPUT_HEIGHT     = 1080;
 int const DEPTH_INPUT_WIDTH      = 1280;
 int const DEPTH_INPUT_HEIGHT     = 720;
-int const FRAMERATE       	 = 30;
+int const FRAMERATE       	 	 = 30;
 int const COLOR_SMALL_WIDTH      = 416;
 int const COLOR_SMALL_HEIGHT     = 416;
 
+int image_width_result = 1080;
+int image_height_result = 1920;
+float image_rotation_result = 90.0;
+
 double framecounteracc =0.0;
-int framecounter = 0;
+double framecounter = 0.0;
 
 int const DISTANS_TO_CROP = 43000;
 
 // Named windows
 char* const WINDOW_DEPTH = "Depth Image";
-char* const WINDOW_FILTERED_DEPTH = "Filtered Depth Image";
+//char* const WINDOW_FILTERED_DEPTH = "Filtered Depth Image";
 char* const WINDOW_RGB     = "RGB Image";
 char* const WINDOW_BACK_RGB     = "Background RGB Image";
+char* const WINDOW_RGB_SMALL     = "RGB Image small";
 
 //Define the gstreamer sink
 char* const gst_str_image = "appsrc ! shmsink socket-path=/dev/shm/camera_image sync=false wait-for-connection=false shm-size=100000000";
@@ -50,10 +56,17 @@ int main(int argc, char * argv[]) try
 	remove("/dev/shm/camera_1m");
 	remove("/dev/shm/camera_small");
 
-	auto out_image 		= cv::VideoWriter(gst_str_image,0 , FRAMERATE, cv::Size(COLOR_INPUT_WIDTH, COLOR_INPUT_HEIGHT), true);
-	auto out_image_1m 	= cv::VideoWriter(gst_str_image_1m,0 , FRAMERATE, cv::Size(COLOR_INPUT_WIDTH, COLOR_INPUT_HEIGHT), true);
-	auto out_depth_image 	= cv::VideoWriter(gst_str_depth,0 , FRAMERATE, cv::Size(COLOR_INPUT_WIDTH, COLOR_INPUT_HEIGHT), false);
+	auto out_image 		= cv::VideoWriter(gst_str_image,0 , FRAMERATE, cv::Size(image_width_result, image_height_result), true);
+	auto out_image_1m 	= cv::VideoWriter(gst_str_image_1m,0 , FRAMERATE, cv::Size(image_width_result, image_height_result), true);
+	auto out_depth_image 	= cv::VideoWriter(gst_str_depth,0 , FRAMERATE, cv::Size(image_width_result, image_height_result), false);
 	auto out_image_small 	= cv::VideoWriter(gst_str_image_small,0 , FRAMERATE, cv::Size(COLOR_SMALL_WIDTH, COLOR_SMALL_HEIGHT), true);
+
+	if(argc > 3){
+		
+		image_width_result = atoi(argv[1]);
+		image_height_result = atoi(argv[2]);
+		image_rotation_result = atof(argv[3]);
+	}
 
 	//std::cout << "main started .. " << std::endl;
 	// Create a pipeline to easily configure and start the camera
@@ -115,6 +128,7 @@ int main(int argc, char * argv[]) try
 	//cv::namedWindow( WINDOW_FILTERED_DEPTH, 0 );
 	//cv::namedWindow( WINDOW_RGB, 0 );
 	//cv::namedWindow( WINDOW_BACK_RGB, 0 );
+	//cv::namedWindow( WINDOW_RGB_SMALL, 0 );
 
 	//cuda::GpuMat disToFaceMat(1920,1080,CV_8UC1,char(20));
 
@@ -135,8 +149,11 @@ int main(int argc, char * argv[]) try
 	Ptr<cuda::Filter> gaussian = cuda::createGaussianFilter(depth8u_medianBlur.type(),depth8u_gausBlur.type(), Size(31,31),0);
 
 	
-	unsigned long long now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+	//unsigned long long now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+	auto now = std::chrono::system_clock::now();
 	auto before = now;
+
+	std::cout << setiosflags(ios::fixed) << setprecision(2);
     
 	while (true){
 		// Using the align object, we block the application until a frameset is available
@@ -161,11 +178,17 @@ int main(int argc, char * argv[]) try
 		rgb_image.upload(rgb);
 		
 
-		cuda::flip(rgb_image, rgb_image_fliped,0);
-		cuda::flip(depth_image, depth_image_fliped,0);
+		cuda::flip(rgb_image, rgb_image_fliped,1);
+		cuda::flip(depth_image, depth_image_fliped,1);
 
-		cuda::rotate(rgb_image_fliped, rgb_image_rotated,Size(1080,1920),90.0,0,1920);
-		cuda::rotate(depth_image_fliped, depth_image_rotated,Size(1080,1920),90.0,0,1920);
+
+		if(image_rotation_result != 0){
+			cuda::rotate(rgb_image_fliped, rgb_image_rotated,Size(image_width_result,image_height_result),image_rotation_result,0,COLOR_INPUT_WIDTH);
+			cuda::rotate(depth_image_fliped, depth_image_rotated,Size(image_width_result,image_height_result),image_rotation_result,0,COLOR_INPUT_WIDTH);
+		}else{
+			rgb_image_rotated = rgb_image_fliped;
+			depth_image_rotated = depth_image_fliped;
+		}
 
 		cuda::resize(rgb_image_rotated, rgb_scaled, Size(COLOR_SMALL_WIDTH, COLOR_SMALL_HEIGHT),0,0, INTER_AREA);
 
@@ -197,9 +220,9 @@ int main(int argc, char * argv[]) try
 
 		//imshow( WINDOW_RGB, rgb_image_out );
 		//imshow( WINDOW_DEPTH, depth_image_out );
-		////imshow( WINDOW_FILTERED_DEPTH, filterd_depth_image_out );
+		//imshow( WINDOW_FILTERED_DEPTH, filterd_depth_image_out );
 		//imshow( WINDOW_BACK_RGB, rgb_back_image_out );
-		//imshow(WINDOW_RGB,small_rgb_image_out);
+		//imshow( WINDOW_RGB_SMALL,small_rgb_image_out);
 
 		out_image.write(rgb_image_out);
 		out_image_1m.write(rgb_back_image_out);
@@ -211,20 +234,23 @@ int main(int argc, char * argv[]) try
 
 		//cv::waitKey( 1 );
 
-		unsigned long long now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+		//unsigned long long now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
+		std::this_thread::sleep_until<std::chrono::system_clock>(before + std::chrono::milliseconds (1000/(FRAMERATE+1)));
+
+		auto now = std::chrono::system_clock::now();
     	auto after = now;
 
-
-		double curr = 1000. / (after - before);
+		double curr = 1000. / std::chrono::duration_cast<std::chrono::milliseconds>(after - before).count();
 		framecounteracc += curr;
 		before = after;
 		framecounter += 1;
 
 		if (framecounter > 30){
 
-			std::cout << "{\"CAMERA_FPS\": "<< (framecounteracc/framecounter) <<"}" << std::endl;
-			framecounteracc = 0;
-			framecounter = 0;
+			std::cout << "{\"CAMERA_FPS\": " << (framecounteracc/framecounter) <<"}" << std::endl;
+			framecounteracc = 0.0;
+			framecounter = 0.0;
 		}
 	
 	}
