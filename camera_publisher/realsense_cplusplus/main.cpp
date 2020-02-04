@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <chrono>
 #include <thread>
+#include <signal.h>
 
 using namespace std;
 using namespace rs2;
@@ -36,20 +37,23 @@ int const DISTANS_TO_CROP = 43000;
 //char* const WINDOW_RGB_SMALL     = "RGB Image small";
 
 //Define the gstreamer sink
-char* const gst_str_image = "appsrc ! shmsink socket-path=/dev/shm/camera_image sync=false wait-for-connection=false shm-size=100000000";
-char* const gst_str_depth = "appsrc ! shmsink socket-path=/dev/shm/camera_depth sync=true wait-for-connection=false shm-size=100000000";
-char* const gst_str_image_1m = "appsrc ! shmsink socket-path=/dev/shm/camera_1m sync=false wait-for-connection=false shm-size=100000000";
-char* const gst_str_image_small = "appsrc ! shmsink socket-path=/dev/shm/camera_small sync=false wait-for-connection=false shm-size=100000000";
+const char* gst_str_image = "appsrc ! shmsink socket-path=/dev/shm/camera_image sync=false wait-for-connection=false shm-size=100000000";
+const char* gst_str_depth = "appsrc ! shmsink socket-path=/dev/shm/camera_depth sync=true wait-for-connection=false shm-size=100000000";
+const char* gst_str_image_1m = "appsrc ! shmsink socket-path=/dev/shm/camera_1m sync=false wait-for-connection=false shm-size=100000000";
+const char* gst_str_image_small = "appsrc ! shmsink socket-path=/dev/shm/camera_small sync=false wait-for-connection=false shm-size=100000000";
 
 //void render_slider(rect location, float& clipping_dist);
 float get_depth_scale(rs2::device dev);
 rs2_stream find_stream_to_align(const std::vector<rs2::stream_profile>& streams);
 bool profile_changed(const std::vector<rs2::stream_profile>& current, const std::vector<rs2::stream_profile>& prev);
+void sig_handler(int sig);
 
 // Capture Example demonstrates how to
 // capture depth and color video streams and render them to the screens
 int main(int argc, char * argv[]) try
 {
+
+	signal(SIGINT, sig_handler);
 	// Removing old sockets
 	remove("/dev/shm/camera_image");
 	remove("/dev/shm/camera_depth");
@@ -274,6 +278,21 @@ catch( const std::exception & e )
 {
        std::cerr << e.what() << std::endl;
        return EXIT_FAILURE;
+}
+
+void sig_handler(int sig) {
+    switch (sig) {
+    case SIGINT:
+        fprintf(stderr, "give out a backtrace or something...\n");
+		remove("/dev/shm/camera_image");
+		remove("/dev/shm/camera_depth");
+		remove("/dev/shm/camera_1m");
+		remove("/dev/shm/camera_small");
+        exit(0);
+    default:
+        fprintf(stderr, "wasn't expecting that!\n");
+        abort();
+    }
 }
 
 
