@@ -29,11 +29,11 @@ double framecounter = 0.0;
 int const DISTANS_TO_CROP = 43000;
 
 // Named windows
-char* const WINDOW_DEPTH = "Depth Image";
+//char* const WINDOW_DEPTH = "Depth Image";
 //char* const WINDOW_FILTERED_DEPTH = "Filtered Depth Image";
-char* const WINDOW_RGB     = "RGB Image";
-char* const WINDOW_BACK_RGB     = "Background RGB Image";
-char* const WINDOW_RGB_SMALL     = "RGB Image small";
+//char* const WINDOW_RGB     = "RGB Image";
+//char* const WINDOW_BACK_RGB     = "Background RGB Image";
+//char* const WINDOW_RGB_SMALL     = "RGB Image small";
 
 //Define the gstreamer sink
 char* const gst_str_image = "appsrc ! shmsink socket-path=/dev/shm/camera_image sync=false wait-for-connection=false shm-size=100000000";
@@ -178,14 +178,22 @@ int main(int argc, char * argv[]) try
 		rgb_image.upload(rgb);
 		
 
-		cuda::flip(rgb_image, rgb_image_fliped,1);
-		cuda::flip(depth_image, depth_image_fliped,1);
+		
 
 
-		if(image_rotation_result != 0){
+		if(image_rotation_result == 90){
+			cuda::flip(rgb_image, rgb_image_fliped,1);
+			cuda::flip(depth_image, depth_image_fliped,1);
+		
 			cuda::rotate(rgb_image_fliped, rgb_image_rotated,Size(image_width_result,image_height_result),image_rotation_result,0,COLOR_INPUT_WIDTH);
 			cuda::rotate(depth_image_fliped, depth_image_rotated,Size(image_width_result,image_height_result),image_rotation_result,0,COLOR_INPUT_WIDTH);
-		}else{
+		}else if(image_rotation_result == -90) {
+			cuda::flip(rgb_image, rgb_image_fliped,0);
+			cuda::flip(depth_image, depth_image_fliped,0);
+
+			cuda::rotate(rgb_image_fliped, rgb_image_rotated,Size(image_width_result,image_height_result),90.0 ,0,COLOR_INPUT_WIDTH);
+			cuda::rotate(depth_image_fliped, depth_image_rotated,Size(image_width_result,image_height_result),90.0 ,0,COLOR_INPUT_WIDTH);
+		}else {
 			rgb_image_rotated = rgb_image_fliped;
 			depth_image_rotated = depth_image_fliped;
 		}
