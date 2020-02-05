@@ -22,7 +22,7 @@ int const COLOR_SMALL_HEIGHT     = 416;
 
 int image_width_result = 1080;
 int image_height_result = 1920;
-float image_rotation_result = 90.0;
+int image_rotation_result = 90;
 
 double framecounteracc =0.0;
 double framecounter = 0.0;
@@ -60,17 +60,21 @@ int main(int argc, char * argv[]) try
 	remove("/dev/shm/camera_1m");
 	remove("/dev/shm/camera_small");
 
-	auto out_image 		= cv::VideoWriter(gst_str_image,0 , FRAMERATE, cv::Size(image_width_result, image_height_result), true);
-	auto out_image_1m 	= cv::VideoWriter(gst_str_image_1m,0 , FRAMERATE, cv::Size(image_width_result, image_height_result), true);
-	auto out_depth_image 	= cv::VideoWriter(gst_str_depth,0 , FRAMERATE, cv::Size(image_width_result, image_height_result), false);
-	auto out_image_small 	= cv::VideoWriter(gst_str_image_small,0 , FRAMERATE, cv::Size(COLOR_SMALL_WIDTH, COLOR_SMALL_HEIGHT), true);
 
 	if(argc > 3){
 		
 		image_width_result = atoi(argv[1]);
 		image_height_result = atoi(argv[2]);
-		image_rotation_result = atof(argv[3]);
+		image_rotation_result = atoi(argv[3]);
+		std::cout << "{\"STATUS\": \"cmd input assigned.. starting\"}" << std::endl;
 	}
+
+	auto out_image 		= cv::VideoWriter(gst_str_image,0 , FRAMERATE, cv::Size(image_width_result, image_height_result), true);
+	auto out_image_1m 	= cv::VideoWriter(gst_str_image_1m,0 , FRAMERATE, cv::Size(image_width_result, image_height_result), true);
+	auto out_depth_image 	= cv::VideoWriter(gst_str_depth,0 , FRAMERATE, cv::Size(image_width_result, image_height_result), false);
+	auto out_image_small 	= cv::VideoWriter(gst_str_image_small,0 , FRAMERATE, cv::Size(COLOR_SMALL_WIDTH, COLOR_SMALL_HEIGHT), true);
+
+
 
 	//std::cout << "main started .. " << std::endl;
 	// Create a pipeline to easily configure and start the camera
@@ -159,6 +163,9 @@ int main(int argc, char * argv[]) try
 
 	std::cout << setiosflags(ios::fixed) << setprecision(2);
     
+
+	std::cout << "{\"STATUS\": \"starting the endless loop\"}" << std::endl;
+
 	while (true){
 		// Using the align object, we block the application until a frameset is available
 		rs2::frameset frameset = pipe.wait_for_frames();
@@ -189,8 +196,8 @@ int main(int argc, char * argv[]) try
 			cuda::flip(rgb_image, rgb_image_fliped,1);
 			cuda::flip(depth_image, depth_image_fliped,1);
 		
-			cuda::rotate(rgb_image_fliped, rgb_image_rotated,Size(image_width_result,image_height_result),image_rotation_result,0,COLOR_INPUT_WIDTH);
-			cuda::rotate(depth_image_fliped, depth_image_rotated,Size(image_width_result,image_height_result),image_rotation_result,0,COLOR_INPUT_WIDTH);
+			cuda::rotate(rgb_image_fliped, rgb_image_rotated,Size(image_width_result,image_height_result),90.0,0,COLOR_INPUT_WIDTH);
+			cuda::rotate(depth_image_fliped, depth_image_rotated,Size(image_width_result,image_height_result),90.0,0,COLOR_INPUT_WIDTH);
 		}else if(image_rotation_result == -90) {
 			cuda::flip(rgb_image, rgb_image_fliped,0);
 			cuda::flip(depth_image, depth_image_fliped,0);
@@ -198,13 +205,14 @@ int main(int argc, char * argv[]) try
 			cuda::rotate(rgb_image_fliped, rgb_image_rotated,Size(image_width_result,image_height_result),90.0 ,0,COLOR_INPUT_WIDTH);
 			cuda::rotate(depth_image_fliped, depth_image_rotated,Size(image_width_result,image_height_result),90.0 ,0,COLOR_INPUT_WIDTH);
 		}else {
+			cuda::flip(rgb_image, rgb_image_fliped,1);
+			cuda::flip(depth_image, depth_image_fliped,1);
+
 			rgb_image_rotated = rgb_image_fliped;
 			depth_image_rotated = depth_image_fliped;
 		}
 
 		cuda::resize(rgb_image_rotated, rgb_scaled, Size(COLOR_SMALL_WIDTH, COLOR_SMALL_HEIGHT),0,0, INTER_AREA);
-
-		
 
 		cuda::threshold(depth_image_rotated,depth_thresh,double(DISTANS_TO_CROP * depth_scale),255,THRESH_TOZERO_INV);
 		
@@ -212,14 +220,14 @@ int main(int argc, char * argv[]) try
 		//median->apply(depth_thresh, depth8u_medianBlur);
 		//cuda::threshold(depth8u_medianBlur,depth8u_medianBlur_Thresh,double(48000*depth_scale),255,THRESH_TOZERO_INV);
 		//gaussian->apply(depth8u_medianBlur_Thresh, depth8u_gausBlur);
+
 		gaussian->apply(depth_thresh, depth8u_gausBlur);	
 		cuda::threshold(depth8u_gausBlur,depth8u_gausBlur_Thresh,double(5),1,THRESH_BINARY);
 
 
 		cuda::GpuMat rgb_back_image;
 		rgb_image_rotated.copyTo(rgb_back_image,depth8u_gausBlur_Thresh);
-		
-		
+				
 		rgb_image_rotated.download(rgb_image_out);
 
 		depth_image_rotated.download(depth_image_out);
