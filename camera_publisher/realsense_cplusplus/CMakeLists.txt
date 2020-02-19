@@ -19,8 +19,15 @@ include_directories(
 )
 
 add_executable(camera_publisher main.cpp)
+add_executable(camera_publisher_refactored main_refactored.cpp)
 
 target_link_libraries(camera_publisher
+  ${OpenCV_LIBRARIES}
+  ${RS_LIBRARIES}
+  pthread
+)
+
+target_link_libraries(camera_publisher_refactored
   ${OpenCV_LIBRARIES}
   ${RS_LIBRARIES}
   pthread

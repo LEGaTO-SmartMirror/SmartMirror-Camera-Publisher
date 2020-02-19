@@ -19,7 +19,8 @@ Module.register('SmartMirror-Camera-Publisher',{
 		forAllClass: "forall",
 		rotation: 90.0,
 		image_width: 1920, 
-		image_height: 1080
+		image_height: 1080,
+		debug: false
 
 	},
 

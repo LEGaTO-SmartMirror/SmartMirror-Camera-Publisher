@@ -10,7 +10,7 @@ module.exports = NodeHelper.create({
  	python_start: function () {
 		const self = this;
 
-			self.camerPub = spawn('modules/' + this.name + '/camera_publisher/realsense_cplusplus/build/camera_publisher',[self.config.image_width, self.config.image_height, self.config.rotation]);
+			self.camerPub = spawn('modules/' + this.name + '/camera_publisher/realsense_cplusplus/build/camera_publisher',[self.config.image_width, self.config.image_height, self.config.rotation, self.config.debug]);
 
 			self.camerPub.stdout.on('data', (data) => {
 				try{
