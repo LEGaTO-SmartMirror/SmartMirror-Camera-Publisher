@@ -11,6 +11,7 @@ using namespace rs2;
 using namespace cv;
 
 
+
 // Window size and frame rate
 int const COLOR_INPUT_WIDTH      = 1920;
 int const COLOR_INPUT_HEIGHT     = 1080;
@@ -27,7 +28,7 @@ int image_rotation_result = 90;
 double framecounteracc =0.0;
 double framecounter = 0.0;
 
-int const DISTANS_TO_CROP = 43000;
+int const DISTANS_TO_CROP = 60000;
 
 // Named windows
 //char* const WINDOW_DEPTH = "Depth Image";
@@ -52,6 +53,7 @@ void sig_handler(int sig);
 // capture depth and color video streams and render them to the screens
 int main(int argc, char * argv[]) try
 {
+	std::cout << "{\"STATUS\": \"main started .. \"}" << std::endl;
 
 	signal(SIGINT, sig_handler);
 	// Removing old sockets
@@ -61,6 +63,7 @@ int main(int argc, char * argv[]) try
 	remove("/dev/shm/camera_small");
 
 
+	std::cout << "{\"STATUS\": \"looking for args\"}" << std::endl;
 	if(argc > 3){
 		
 		image_width_result = atoi(argv[1]);
@@ -69,28 +72,39 @@ int main(int argc, char * argv[]) try
 		std::cout << "{\"STATUS\": \"cmd input assigned.. starting\"}" << std::endl;
 	}
 
+	std::cout << "{\"STATUS\": \"creating images sinks\"}" << std::endl;
+	
 	auto out_image 		= cv::VideoWriter(gst_str_image,0 , FRAMERATE, cv::Size(image_width_result, image_height_result), true);
 	auto out_image_1m 	= cv::VideoWriter(gst_str_image_1m,0 , FRAMERATE, cv::Size(image_width_result, image_height_result), true);
 	auto out_depth_image 	= cv::VideoWriter(gst_str_depth,0 , FRAMERATE, cv::Size(image_width_result, image_height_result), false);
 	auto out_image_small 	= cv::VideoWriter(gst_str_image_small,0 , FRAMERATE, cv::Size(COLOR_SMALL_WIDTH, COLOR_SMALL_HEIGHT), true);
 
+	std::cout << "{\"STATUS\": \"getting realsense context\"}" << std::endl;
+	rs2::context ctx;
+
+	//std::cout << "{\"STATUS\": \"make hard reset.. \"}" << std::endl;
+	//rs2::device_list devices =  ctx.query_devices();
+	//rs2::device dev = ctx.query_devices().front();
+	//dev.hardware_reset();
+	//rs2::device_hub hub(ctx);
+
+	//std::this_thread::sleep_until<std::chrono::system_clock>(before + std::chrono::milliseconds (1000)));
+	//std::cout << "{\"STATUS\": \"wait for hub \"}" << std::endl;
+	//dev = hub.wait_for_device();
 
 
-	//std::cout << "main started .. " << std::endl;
+	
 	// Create a pipeline to easily configure and start the camera
 	rs2::pipeline pipe;
 
-	//std::cout << "pipeline created .. " << std::endl;
+	std::cout << "pipeline created .. " << std::endl;
 
 	rs2::config cfg;
 
 	cfg.enable_stream(RS2_STREAM_DEPTH, DEPTH_INPUT_WIDTH, DEPTH_INPUT_HEIGHT, RS2_FORMAT_Z16, FRAMERATE);
 	cfg.enable_stream(RS2_STREAM_COLOR, COLOR_INPUT_WIDTH, COLOR_INPUT_HEIGHT, RS2_FORMAT_BGR8, FRAMERATE);
 	
-	//rs2::context ctx;
-
-	//rs2::device_list devices =  ctx.query_devices();
-
+	
 	//std::cout << "found " << devices.size() << " devices" << std::endl;
 
 	
